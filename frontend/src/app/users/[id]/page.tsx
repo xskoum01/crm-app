@@ -8,6 +8,7 @@ import { api } from "@/lib/api";
 import type { User, UserRole } from "@/lib/types";
 
 const EMPTY_USER: User = {
+  id: 0,
   name: "",
   email: "",
   role: "user",
