@@ -1,11 +1,13 @@
 # backend/db.py
 from sqlmodel import SQLModel, Session, create_engine
+import os
 
-DATABASE_URL = "sqlite:///./crm.db"
+DATABASE_URL = os.getenv("DATABASE_URL", "sqlite:///./crm.db")
 
-engine = create_engine(DATABASE_URL, echo=False)
-
-
+engine = create_engine(
+    DATABASE_URL,
+    echo=True,
+)
 def create_db_and_tables() -> None:
     SQLModel.metadata.create_all(engine)
 
