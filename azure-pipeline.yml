@@ -1,0 +1,37 @@
+# azure-pipelines.yml
+# Tahle pipeline NEMÁ automatický trigger – spouštíš ji ručně z Azure DevOps UI.
+trigger: none
+pr: none
+
+pool:
+  vmImage: 'ubuntu-latest'
+
+variables:
+  # Načte secret proměnné z variable group (kde máš GITHUB_PAT)
+  - group: github-secrets
+
+  # Jméno GitHub repozitáře ve formátu "uzivatel/repozitar"
+  - name: GITHUB_REPO
+    value: 'xskoum01/crp-app'  
+
+stages:
+- stage: SyncToGitHub
+  displayName: 'Sync Azure Repos → GitHub (manual run)'
+  jobs:
+  - job: Mirror
+    displayName: 'Push current commit to GitHub'
+    steps:
+      - checkout: self
+        persistCredentials: false
+
+      - script: |
+          git config user.email "ci@azuredevops.local"
+          git config user.name "Azure DevOps CI"
+
+          # přidej / aktualizuj remote 'github' s PAT
+          git remote add github https://$(GITHUB_PAT)@github.com/$(GITHUB_REPO).git || \
+          git remote set-url github https://$(GITHUB_PAT)@github.com/$(GITHUB_REPO).git
+
+          # pushni aktuální commit (HEAD) do masteru na GitHubu
+          git push github HEAD:master
+        displayName: 'Push to GitHub'
