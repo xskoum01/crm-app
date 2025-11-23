@@ -34,6 +34,7 @@ const STATUS_OPTIONS: {
 // ------------------------- Prázdná schůzka -------------------------
 
 const EMPTY_MEETING: Meeting = {
+  id: 0,
   title: "",
   date: "",
   time: "",
