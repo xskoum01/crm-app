@@ -10,6 +10,7 @@ import type { Task, Customer, TaskStatus } from "@/lib/types";
 const ASSIGNEE = "peta" as const;
 
 const EMPTY_TASK: Task = {
+  id: 0,
   title: "",
   description: "",
   priority: 2,
