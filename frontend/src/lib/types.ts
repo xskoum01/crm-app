@@ -27,7 +27,7 @@ export type Assignee = "vlada" | "peta";
 export type TaskStatus = "todo" | "in_progress" | "done";
 
 export type Task = {
-  id?: number;
+  id: number;
   title: string;
   description?: string | null;
   priority: number;
@@ -43,7 +43,7 @@ export type Task = {
 export type MeetingStatus = "planned" | "done" | "cancelled";
 
 export type Meeting = {
-  id?: number;
+  id: number;
   title: string;
   date?: string | null;        // ISO datum, např. "2025-11-21"
   time?: string | null;        // čas jako "14:30"
@@ -58,7 +58,7 @@ export type Meeting = {
 export type UserRole = "user" | "manager" | "admin";
 
 export type User = {
-  id?: number;
+  id: number;
   name: string;
   email: string;
   role?: UserRole | null;
