@@ -12,7 +12,7 @@ variables:
 
   # Jméno GitHub repozitáře ve formátu "uzivatel/repozitar"
   - name: GITHUB_REPO
-    value: 'xskoum01/crp-app'  
+    value: 'xskoum01/crm-app'  
 
 stages:
 - stage: SyncToGitHub
