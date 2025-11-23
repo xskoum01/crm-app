@@ -1,0 +1,19 @@
+# --- Python backend ---
+backend/__pycache__/
+backend/.venv/
+*.pyc
+*.pyo
+
+# Lokální databáze
+*.db
+
+# --- Node/Next.js frontend ---
+frontend/node_modules/
+frontend/.next/
+frontend/npm-debug.log*
+frontend/yarn-error.log*
+
+# Obecné
+.env
+.vscode/
+.DS_Store
