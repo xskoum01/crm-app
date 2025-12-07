@@ -40,6 +40,9 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+@app.get("/")
+def root():
+    return {"status": "ok"}
 
 @app.on_event("startup")
 def on_startup():
