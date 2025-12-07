@@ -1,0 +1,49 @@
+name: Deploy backend to Roští.cz
+
+on:
+  push:
+    branches: [ master ]   # nebo main, pokud máš jinou hlavní větev
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    env:
+      HOST: ssh.rosti.cz
+      USER: app
+      PORT: 14843
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Setup SSH agent
+        uses: webfactory/ssh-agent@v0.8.0
+        with:
+          ssh-private-key: ${{ secrets.ROSTI_DEPLOY_SSH_KEY }}
+
+      - name: Setup hostkey
+        run: |
+          echo "ssh.rosti.cz ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQCuBnL6jOQyan8po1+NV7zSRl6QIdvkNyKZ0GyUD6y9E3ixSAX56Geps50/M7zaiXU0U8yNOYTjeiUc3LfFWHYy25b5UFkligbDmJITUZ9Ga2QdFDXCfE4M8JtEk2KL+XGPw6r37Zjl+0a7bc0iJDtqdkr4Kpc+qgn+D953k2bpm5MuFCslg/RVh87Q/4bXJFTIr+3gIv9YW7Bs36fJU0F4j3JnoXk7/AjmlqAkXoRvNK/rtQx1f2eHiLHS7KJwwhK1oG+Xgh5qVyISdJamDZL/fXCRBzjzjPjw2m4MACQRiz1F/h8/81dI25pm6PC9afwoijZDkmonA/oSsM7CZxHR" > ./known_hosts
+
+      # zkopíruj jen backend na /srv/app (bez frontend a .git)
+      - name: Copy backend code to Roští
+        run: |
+          rsync -ae "ssh -o UserKnownHostsFile=./known_hosts -p $PORT" \
+            --delete-after \
+            ./backend/ $USER@$HOST:/srv/app/
+
+      # nainstaluj requirements ze /srv/app/requirements.txt
+      - name: Install Python dependencies on Roští
+        run: |
+          ssh -o UserKnownHostsFile=./known_hosts -p $PORT $USER@$HOST '\
+            cd /srv && \
+            source /srv/venv/bin/activate && \
+            pip install -r /srv/app/requirements.txt \
+          '
+
+      # restartni appku přes supervisor
+      - name: Restart backend via supervisor
+        run: |
+          ssh -o UserKnownHostsFile=./known_hosts -p $PORT $USER@$HOST supervisorctl reread
+          ssh -o UserKnownHostsFile=./known_hosts -p $PORT $USER@$HOST supervisorctl update
+          ssh -o UserKnownHostsFile=./known_hosts -p $PORT $USER@$HOST supervisorctl restart app
