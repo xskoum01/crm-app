@@ -13,7 +13,6 @@ engine = create_engine(
 def create_db_and_tables() -> None:
     SQLModel.metadata.create_all(engine)
 
-
 def get_session():
     """Dependency pro FastAPI – zajistí otevření / zavření session."""
     with Session(engine) as session:
