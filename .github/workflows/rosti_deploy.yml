@@ -2,7 +2,7 @@ name: Deploy backend to Roští.cz
 
 on:
   push:
-    branches: [ master ]
+    branches: [ master ]   # nebo main, pokud máš jinou hlavní větev
 
 jobs:
   deploy:
@@ -11,46 +11,39 @@ jobs:
       HOST: ssh.rosti.cz
       USER: app
       PORT: 14843
+
     steps:
-      # 1) stáhni repozitář
       - name: Checkout repository
         uses: actions/checkout@v3
 
-      # 2) SSH agent s deploy klíčem z Roští
       - name: Setup SSH agent
         uses: webfactory/ssh-agent@v0.8.0
         with:
           ssh-private-key: ${{ secrets.ROSTI_DEPLOY_SSH_KEY }}
 
-      # 3) známy host key pro ssh.rosti.cz
       - name: Setup hostkey
         run: |
           echo "ssh.rosti.cz ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQCuBnL6jOQyan8po1+NV7zSRl6QIdvkNyKZ0GyUD6y9E3ixSAX56Geps50/M7zaiXU0U8yNOYTjeiUc3LfFWHYy25b5UFkligbDmJITUZ9Ga2QdFDXCfE4M8JtEk2KL+XGPw6r37Zjl+0a7bc0iJDtqdkr4Kpc+qgn+D953k2bpm5MuFCslg/RVh87Q/4bXJFTIr+3gIv9YW7Bs36fJU0F4j3JnoXk7/AjmlqAkXoRvNK/rtQx1f2eHiLHS7KJwwhK1oG+Xgh5qVyISdJamDZL/fXCRBzjzjPjw2m4MACQRiz1F/h8/81dI25pm6PC9afwoijZDkmonA/oSsM7CZxHR" > ./known_hosts
 
-      # 4) volitelné ENV proměnné z GitHub secretu ENV
-      - name: Write .env file (optional)
-        if: secrets.ENV != ''
-        run: |
-          cat << EOF > .env
-          ${{ secrets.ENV }}
-          EOF
-
-      # 5) zkopíruj celý repozitář na Roští do /srv/app
-      - name: Copy code to Roští
+      # zkopíruj jen backend na /srv/app (bez frontend a .git)
+      - name: Copy backend code to Roští
         run: |
           rsync -ae "ssh -o UserKnownHostsFile=./known_hosts -p $PORT" \
-            --delete-after --exclude=.git ./ $USER@$HOST:/srv/app/
+            --delete-after \
+            ./backend/ $USER@$HOST:/srv/app/
 
-      # 6) nainstaluj Python závislosti na serveru
+      # nainstaluj requirements ze /srv/app/requirements.txt
       - name: Install Python dependencies on Roští
         run: |
           ssh -o UserKnownHostsFile=./known_hosts -p $PORT $USER@$HOST '\
+            cd /srv && \
             source /srv/venv/bin/activate && \
-            pip install -r /srv/app/backend/requirements.txt \
+            pip install -r /srv/app/requirements.txt \
           '
 
-      # 7) načti změny a restartuj backend
+      # restartni appku přes supervisor
       - name: Restart backend via supervisor
         run: |
           ssh -o UserKnownHostsFile=./known_hosts -p $PORT $USER@$HOST supervisorctl reread
+          ssh -o UserKnownHostsFile=./known_hosts -p $PORT $USER@$HOST supervisorctl update
           ssh -o UserKnownHostsFile=./known_hosts -p $PORT $USER@$HOST supervisorctl restart app
